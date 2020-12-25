@@ -1,11 +1,15 @@
 <template>
     <the-layout>
-        <div>中间内容</div>
+        <tree-list :treeData="treeData"></tree-list>
     </the-layout>
 </template>
 <script lang="ts">
 import TheLayout from '@/components/TheLayout.vue';
+import TreeList from '@/components/TreeList.vue';
+
 import { defineComponent, reactive, toRefs, watch } from 'vue';
+import treeData from '@/assets/js/menu';
+console.log('data1', treeData);
 interface DetailsInfo {
     name: string;
     age: number;
@@ -28,7 +32,8 @@ export default defineComponent({
             },
             src: '',
             count: 0,
-            count1: 0
+            count1: 0,
+            treeData: treeData
         });
         const refsData = toRefs(data);
         // watchEffect(() => {
@@ -43,7 +48,8 @@ export default defineComponent({
         };
     },
     components: {
-        TheLayout
+        TheLayout,
+        TreeList
     }
 
 });
