@@ -1,6 +1,6 @@
 <template>
     <the-layout>
-        <tree-list :treeData="treeData"></tree-list>
+        <tree-list :treeData="treeData" :activeIds="ids"></tree-list>
     </the-layout>
 </template>
 <script lang="ts">
@@ -24,6 +24,31 @@ interface Dataprops {
 export default defineComponent({
     name: 'index',
     setup() {
+        const activeId = 7;
+
+        const findPath = (menus: any, targetId: any) => {
+            let ids: any = [];
+            const traverse = (subMenus: any, prev: any) => {
+                if (ids) {
+                    return;
+                }
+
+                if (!subMenus) {
+                    return;
+                }
+
+                subMenus.forEach((subMenu: any) => {
+                    if (subMenus.id === targetId) {
+                        ids = [...prev, targetId];
+                        return;
+                    }
+                    traverse(subMenu._child, [...prev, subMenu.id]);
+                });
+            };
+            traverse(menus, []);
+            return ids;
+        };
+        const ids = findPath(treeData, activeId);
         const data: Dataprops = reactive({
             showMask: false,
             detailsInfo: {
@@ -33,7 +58,8 @@ export default defineComponent({
             src: '',
             count: 0,
             count1: 0,
-            treeData: treeData
+            treeData: treeData,
+            ids
         });
         const refsData = toRefs(data);
         // watchEffect(() => {
