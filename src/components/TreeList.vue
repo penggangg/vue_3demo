@@ -2,16 +2,18 @@
     <div class="menu">
         <div
             class="menu-item"
-            v-for="item in treeData" :key="item.id"
+            v-for="item in treeData"
+            :key="item.id"
             :class="`menu-item${depth}`"
         >
-        <span class="name">{{item.name}}</span>
-        <tree-list
-            v-if="item._child && item._child.length"
-            :treeData="subMenu"
-            :activeIds="activeIds"
-            :depth="depth + 1"
-        ></tree-list>
+            <span class="name" @click="onMenuItemClick(item)">{{item.name}} {{activeIds}}</span>
+            <tree-list
+                v-if="subMenu && subMenu.length && activeIds.indexOf(item.id) > -1"
+                :treeData="subMenu"
+                :activeIds="activeIds"
+                :depth="depth + 1"
+                @change="onSubActiveIdChange"
+            ></tree-list>
         </div>
     </div>
 </template>
@@ -21,14 +23,16 @@ import { computed, defineComponent, reactive, ref, toRefs, watch } from 'vue';
 export default defineComponent({
     name: 'TreeList',
     props: ['treeData', 'depth', 'activeIds'],
-    setup(props) {
+    setup(props, context) {
         const activeId = ref<number | null | undefined>(null);
-        const activeIds = reactive(props.activeIds);
-        console.log(activeIds, 'activeIds');
         const depth = props.depth || 0;
+        /**
+         * 这里 activeIds 也可能是异步获取到的 所以用 watch 保证初始化
+         */
         watch(
-            () => activeIds,
+            () => props.activeIds,
             (newActiveIds) => {
+                console.log('改变了吗', newActiveIds);
                 if (newActiveIds) {
                     const newActiveId = newActiveIds[depth];
                     if (newActiveId) {
@@ -45,22 +49,57 @@ export default defineComponent({
          * 获取子节点数据
          */
         const getActiveSubMenu = () => {
-            const { treeData } = props;
-            console.log(treeData, 'props.treeData');
-            treeData.map((item: any, index: any) => {
-                console.log(item);
-                console.log(index);
-            });
-            // return props.treeData.find(({ id }: {id: number}) => id === activeId.value)._child;
+            console.log('depth', depth, activeId);
+
+            const _child = props.treeData && props.treeData.find(({ id }: {id: number}) => id === activeId.value);
+            console.log('_child', _child);
+            return _child && _child._child;
         };
         const subMenu = computed(getActiveSubMenu);
 
+        /**
+         * 递归收集子菜单第一项的 id
+         */
+        const getSubIds = (child: []) => {
+            const subIds: any = [];
+            const traverse = (data: any[]) => {
+                if (data && data.length) {
+                    const first: any = data[0];
+                    subIds.push(first.id);
+                    traverse(first._child);
+                }
+            };
+            traverse(child);
+            return subIds;
+        };
+        /**
+         * 点击某一项
+         */
+        const onMenuItemClick = (menuItem: any) => {
+            const newActiveId = menuItem.id;
+            // if (newActiveId !== activeId.value) {
+            activeId.value = newActiveId;
+            const child = getActiveSubMenu();
+            const subIds = getSubIds(child);
+            // 把子菜单的默认第一项 ids 也拼接起来 向父组件 emit
+            console.log('newActiveId', newActiveId);
+            console.log('subIds', subIds);
+            context.emit('change', [newActiveId, ...subIds]);
+            // }
+        };
+
+        const onSubActiveIdChange = (ids: []) => {
+            context.emit('change', [activeId.value, ...ids]);
+        };
+
         const data = reactive({
-            treeData: props.treeData,
             depth,
             activeId,
             subMenu,
-            activeIds
+            onMenuItemClick,
+            onSubActiveIdChange,
+            treeData: props.treeData
+            // activeIds: props.activeIds
         });
         const refsData = toRefs(data);
         return {
@@ -80,7 +119,7 @@ export default defineComponent({
             display: inline-block;
             font-size: 28px;
             width: 7em;
-            overflow: hidden;
+            // overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
         }
@@ -92,6 +131,9 @@ export default defineComponent({
         }
         &.menu-item2 {
             background:green;
+        }
+        &.menu-item3 {
+            background: blue;
         }
     }
 }

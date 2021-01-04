@@ -19,7 +19,15 @@ const data = [
                 status: 1,
                 name: '科学研究类',
                 _child: [
-                    { id: 8, fatherId: 7, status: 1, name: '植物学与植物生理学' },
+                    {
+                        id: 8,
+                        fatherId: 7,
+                        status: 1,
+                        name: '植物学与植物生理学',
+                        _child: [
+                            { id: 91, fatherId: 8, status: 1, name: '最后一级' }
+                        ]
+                    },
                     { id: 9, fatherId: 7, status: 1, name: '动物学与动物生理学' },
                     { id: 10, fatherId: 7, status: 1, name: '微生物学' },
                     { id: 11, fatherId: 7, status: 1, name: '生态学' }
