@@ -3,6 +3,7 @@
         <tree-list
             :treeData="treeData"
             :activeIds="ids"
+            :depth="depth"
             @change="activeIdsChange"
         ></tree-list>
     </the-layout>
@@ -11,7 +12,7 @@
 import TheLayout from '@/components/TheLayout.vue';
 import TreeList from '@/components/TreeList.vue';
 
-import { defineComponent, reactive, toRefs, ref, watchEffect, watch } from 'vue';
+import { defineComponent, reactive, toRefs } from 'vue';
 import treeData from '@/assets/js/menu';
 console.log('data1', treeData);
 interface DetailsInfo {
@@ -19,10 +20,8 @@ interface DetailsInfo {
     age: number;
 }
 interface Dataprops {
-    showMask: boolean;
-    src: string;
-    count: number;
-    detailsInfo: DetailsInfo;
+    depth: number;
+    ids: number[];
     [propname: string]: any;
 }
 export default defineComponent({
@@ -54,41 +53,20 @@ export default defineComponent({
             console.log(ids, 'ids');
             return ids;
         };
-        const _ids = findPath(treeData, activeId);
-        const ids = ref(_ids);
-        const activeIdsChange = (newIds: []) => {
-            ids.value = newIds;
-            console.log('当前选中的id路径', newIds);
-            console.log(ids);
-        };
-        // return {
-        //     ids,
-        //     activeIdsChange,
-        //     treeData
-        // };
+        const ids = findPath(treeData, activeId);
         const data: Dataprops = reactive({
-            showMask: false,
-            activeIdsChange,
-            detailsInfo: {
-                name: 'penggang',
-                age: 12
-            },
-            src: '',
-            count: 0,
-            count1: 0,
+            depth: 0,
             treeData: treeData,
             ids
         });
+        const activeIdsChange = (newIds: []) => {
+            data.ids = newIds;
+            console.log('当前选中的id路径', newIds);
+        };
         const refsData = toRefs(data);
-        watchEffect(() => {
-            console.log(refsData.count.value);
-        });
-        watch([refsData.count, refsData.count1], ([count, count1], [oldCount, oldCount1]) => {
-            console.log(count, oldCount);
-            console.log(count1, oldCount1);
-        });
         return {
-            ...refsData
+            ...refsData,
+            activeIdsChange
         };
     },
     components: {
