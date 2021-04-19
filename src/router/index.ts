@@ -10,11 +10,9 @@ const routesMap: Array<RouteRecordRaw> = [];
 
 const capitalizeFirstLetter = (str: string) => str.charAt(0).toLocaleLowerCase() + str.slice(1);
 // const validateFileName = (str: string) => /^\S+\.vue$/.test(str) && str.replace(/^\S+\/(\w+)\.vue$/, (rs, $1) => capitalizeFirstLetter($1));
-
 requireComponent.keys().map(filePath => {
     const componentConfig = requireComponent(filePath);
     const componentName = capitalizeFirstLetter(componentConfig.default.name);
-    console.log('filePath', filePath);
     if (componentName !== 'index') {
         routesMap.push({
             path: `/${componentName}`,
@@ -23,7 +21,7 @@ requireComponent.keys().map(filePath => {
         });
     }
 });
-
+// 组件name 为path
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
@@ -32,7 +30,6 @@ const routes: Array<RouteRecordRaw> = [
     },
     ...routesMap
 ];
-console.log(routes);
 const router = createRouter({
     history: createWebHashHistory(),
     routes

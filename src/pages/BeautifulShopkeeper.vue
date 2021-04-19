@@ -12,19 +12,41 @@
         <div class="content">
             <countdown
                 :status="status"
-                :days="days"
-                :hours="hours"
-                :minutes="minutes"
+                :expirationDate="expirationDate"
                 :isHomeOptionsFinished="isHomeOptionsFinished"
             >
             </countdown>
+            <area-list
+                :areaList="areaList"
+                :areaCode="areaCode"
+                @changeAreaCode="changeAreaCodeHandler"
+            >
+            </area-list>
+            <!-- 人员列表 -->
+            <div class="userList" v-if="userList.length && isFinished">
+                <user-item
+                    @vote="voteHandler"
+                    :userInfo="item"
+                    :canVote="canVote"
+                    :status="status"
+                    :index="index"
+                    :isCanNextVote="isCanNextVote"
+                    v-for="(item, index) in userList"
+                    :key="item.userCode"></user-item>
+            </div>
+            <div class="empty" v-if="!userList.length && isFinished">
+                没有搜索到信息
+            </div>
         </div>
     </div>
 </template>
 <script lang="ts">
-import { defineComponent, reactive, toRefs, ref, onMounted, computed } from 'vue';
-import { getUserInfoByOpenid, getUserInfo, homepageParams } from '@/assets/js/api';
+import { defineComponent, reactive, toRefs, ref, onMounted, onBeforeUnmount } from 'vue';
+import { getUserInfoByOpenid, getUserInfo, homepageParams, queryCandidateList, vote } from '@/assets/js/api';
 import Countdown from '@/components/Countdown.vue';
+import AreaList from '@/components/AreaList.vue';
+import UserItem from '@/components/UserItem2.vue';
+
 interface Area {
     areaCode: string;
     areaName: string;
@@ -35,16 +57,14 @@ interface User {
     userName: string;
     voteCnt: number;
 }
-const MILESECONDS_OF_DAY = 1000 * 60 * 60 * 24;
-const MILESECONDS_OF_HOUR = 1000 * 60 * 60;
-const MILESECONDS_OF_MINUTE = 1000 * 60;
-// const MILESECONDS_OF_SECOND = 1000;
 export default defineComponent({
-    name: 'about',
+    name: 'beautifulShopkeeper',
     components: {
-        Countdown
+        Countdown,
+        AreaList,
+        UserItem
     },
-    async setup() {
+    setup() {
         // 基础状态 + 数据
         const state = reactive({
             expirationDate: 0,
@@ -86,7 +106,9 @@ export default defineComponent({
                 }
             }
         });
-        // 获取用户信息
+        /**
+         * 获取用户信息
+         */
         const getUserInfoHandler = () => {
             return new Promise<void>(resolve => {
                 getUserInfo({
@@ -99,7 +121,9 @@ export default defineComponent({
                 });
             });
         };
-        // 获取用户信息
+        /**
+         * 获取用户信息
+         */
         const getUserInfoByOpenidHandler = () => {
             return new Promise<void>(resolve => {
                 getUserInfoByOpenid({
@@ -112,19 +136,24 @@ export default defineComponent({
                 });
             });
         };
+        /**
+         * 获取活动配置信息
+         */
         const getHomepageParamsHandler = () => {
             return new Promise<void>(resolve => {
                 homepageParams({
                     openid: wxState.openid,
                     activityId: 2
                 }).then(res => {
+                    businessData.areaList = res.data?.hsgdSrVoteAreaVOS;
+                    businessData.areaCode = businessData.areaList[0].areaCode;
                     state.canVote = res.data?.canVote;
-                    state.status = 1;
+                    state.status = res.data?.status;
                     state.timeBeforeVoteEnd = res.data?.timeBeforeVoteEnd;
                     state.timeBeforeVoteStart = res.data?.timeBeforeVoteStart;
                     state.isHomeOptionsFinished = true;
                     if (state.status === 1 || state.status === 3) {
-                        state.expirationDate = 100000;
+                        state.expirationDate = res.data?.timeBeforeVoteEnd;
                     } else if (state.status === 0) {
                         state.expirationDate = res.data?.timeBeforeVoteStart;
                     }
@@ -134,67 +163,85 @@ export default defineComponent({
         };
         getUserInfoHandler();
         getUserInfoByOpenidHandler();
-        getHomepageParamsHandler();
-        // if (state.status === 1 || state.status === 3 || state.status === 0) {
-        //     (state.interval as any) = setInterval(() => {
-        //         if (state.expirationDate <= 0) {
-        //             // 当倒计时结束的时候 判断当前状态 如果活动未开始 则将status置为1或3 开始则置为2
-        //             state.status = state.status === 0 ? 1 : 2;
-        //             state.expirationDate = state.timeBeforeVoteEnd - state.timeBeforeVoteStart - 1000;
-        //         } else {
-        //             state.expirationDate = state.expirationDate - 1000;
-        //         }
-        //     }, 1000);
-        // }
-        // 日期
-        const days = computed(() => {
-            if (!state.expirationDate) {
-                return '00';
-            } else {
-                const t = parseInt((state.expirationDate / MILESECONDS_OF_DAY).toString());
-                return t >= 0 ? (t < 10 ? `0${t}` : String(t)) : '00';
-            }
-        });
-        const hours = computed(() => {
-            if (!state.expirationDate) {
-                return '00';
-            } else {
-                const t = parseInt(((state.expirationDate % MILESECONDS_OF_DAY) / MILESECONDS_OF_HOUR).toString());
-                return t >= 0 ? (t < 10 ? `0${t}` : String(t)) : '00';
-            }
-        });
-        const minutes = computed(() => {
-            if (!state.expirationDate) {
-                return '00';
-            } else {
-                const t = parseInt((state.expirationDate % MILESECONDS_OF_DAY % MILESECONDS_OF_HOUR / MILESECONDS_OF_MINUTE).toString());
-                return t >= 0 ? (t < 10 ? `0${t}` : String(t)) : '00';
-            }
-        });
+        /**
+         * 获取人员列表
+         */
+        const getUserListHandler = () => {
+            queryCandidateList({
+                areaCode: businessData.areaCode,
+                queryParam: businessData.queryParam,
+                pageNo: state.pagination.pageNo,
+                pageSize: state.pagination.pageSize,
+                activityId: 2
+            }).then(res => {
+                state.isFinished = true;
+                businessData.userList = [...businessData.userList, ...res.data?.data];
+                if (businessData.userList.length === res.data?.totalRows) {
+                    // 加载完毕
+                    state.isLoadAll = true;
+                }
+            });
+        };
+        /**
+         * 选择区域
+         */
+        const changeAreaCodeHandler = (item: Area) => {
+            if (businessData.areaCode === item.areaCode) { return; }
+            businessData.queryParam = '';
+            businessData.areaCode = item.areaCode;
+            state.pagination.pageNo = 1;
+            state.isLoadAll = false;
+            state.isFinished = false;
+            businessData.userList = [];
+            getUserListHandler();
+        };
+        /**
+         * 投票
+         */
+        const voteHandler = (userInfo: User) => {
+            console.log('userInfo', userInfo);
+            const _uniqueCode = new Date().getTime();
+            vote({
+                openid: wxState.openid,
+                areaCode: userInfo.areaCode,
+                userCode: userInfo.userCode,
+                uniqueCode: _uniqueCode,
+                activityId: 2
+            }).then(res => {
+                state.isCanNextVote = res.data?.canVote;
+                userInfo.voteCnt = res.data?.voteCnt;
+            });
+        };
         // refs
         const voteRef = ref(null);
         const scrollRef = ref(null);
-        onMounted(() => {
-            console.log(9999999);
-            const _voteEle: any = voteRef.value;
-            const _scrollEle: any = scrollRef.value;
-            _voteEle.addEventListener('scroll', () => {
-                const _scrollTop = _voteEle.scrollTop;
-                const scrollHeight = _scrollEle.scrollHeight;
-                const _voteEleHeight = _voteEle.offsetHeight;
-                if (_scrollTop + _voteEleHeight >= scrollHeight) {
-                }
-            });
+        onMounted(async() => {
+            await getHomepageParamsHandler();
+            if (state.status === 1 || state.status === 3 || state.status === 0) {
+                (state.interval as any) = setInterval(() => {
+                    if (state.expirationDate <= 0) {
+                        // 当倒计时结束的时候 判断当前状态 如果活动未开始 则将status置为1或3 开始则置为2
+                        state.status = state.status === 0 ? 1 : 2;
+                        state.expirationDate = state.timeBeforeVoteEnd - state.timeBeforeVoteStart - 1000;
+                    } else {
+                        state.expirationDate = state.expirationDate - 1000;
+                    }
+                }, 1000);
+            }
+            getUserListHandler();
+        });
+        onBeforeUnmount(() => {
+            clearInterval(state.interval as any);
+            state.interval = null;
         });
         return {
             ...toRefs(state),
             ...toRefs(wxState),
             ...toRefs(businessData),
-            days,
-            hours,
-            minutes,
             voteRef,
-            scrollRef
+            scrollRef,
+            changeAreaCodeHandler,
+            voteHandler
         };
     }
 });
@@ -381,7 +428,3 @@ export default defineComponent({
     }
 }
 </style>
-
-function onMounted(arg0: () => void) {
-  throw new Error('Function not implemented.');
-}

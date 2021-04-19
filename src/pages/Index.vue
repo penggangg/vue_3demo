@@ -70,8 +70,8 @@ export default defineComponent({
         };
     },
     components: {
-        TheLayout,
-        TreeList
+        TreeList,
+        TheLayout
     }
 
 });
