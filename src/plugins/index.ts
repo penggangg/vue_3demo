@@ -1,7 +1,7 @@
 import { createApp } from 'vue';
 
 /**
- * @description 加载所有 Plugins
+ * @description 加载所有 Plugins 主要是第三方插件
  * @param  {ReturnType<typeofcreateApp>} app 整个应用的实例
  */
 export function loadAllPlugins(app: ReturnType<typeof createApp>) {
