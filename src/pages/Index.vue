@@ -9,8 +9,6 @@
     </the-layout>
 </template>
 <script lang="ts">
-import TheLayout from '@/components/TheLayout.vue';
-import TreeList from '@/components/TreeList.vue';
 
 import { defineComponent, reactive, toRefs } from 'vue';
 import treeData from '@/assets/js/menu';
@@ -70,8 +68,6 @@ export default defineComponent({
         };
     },
     components: {
-        TreeList,
-        TheLayout
     }
 
 });

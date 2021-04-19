@@ -11,6 +11,7 @@ const routesMap: Array<RouteRecordRaw> = [];
 const capitalizeFirstLetter = (str: string) => str.charAt(0).toLocaleLowerCase() + str.slice(1);
 // const validateFileName = (str: string) => /^\S+\.vue$/.test(str) && str.replace(/^\S+\/(\w+)\.vue$/, (rs, $1) => capitalizeFirstLetter($1));
 requireComponent.keys().map(filePath => {
+    console.log(filePath);
     const componentConfig = requireComponent(filePath);
     const componentName = capitalizeFirstLetter(componentConfig.default.name);
     if (componentName !== 'index') {

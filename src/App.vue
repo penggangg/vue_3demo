@@ -22,4 +22,7 @@ html,body {
   height: 100%;
   position: relative;
 }
+.van-toast__text{
+  white-space: nowrap;
+}
 </style>
