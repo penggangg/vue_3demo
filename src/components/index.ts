@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 /**
- * @function registeGlobalComponent 自动化祖册global下的组件为全局组件
+ * @function registeGlobalComponent 自动化注册global下的组件为全局组件
  * @param app
  */
 export function registeGlobalComponent(app: ReturnType<typeof createApp>): void {
