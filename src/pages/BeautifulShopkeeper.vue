@@ -42,11 +42,12 @@
 </template>
 <script lang="ts">
 import { defineComponent, reactive, toRefs, ref, onMounted, onBeforeUnmount } from 'vue';
-import { getUserInfoByOpenid, getUserInfo, homepageParams, queryCandidateList, vote } from '@/assets/js/api';
+import { homepageParams, queryCandidateList, vote } from '@/assets/js/api';
+import userInfoHook from '@/hooks/userInfoHook';
 import Countdown from '@/components/Countdown.vue';
 import AreaList from '@/components/AreaList.vue';
 import UserItem from '@/components/UserItem2.vue';
-
+console.log(userInfoHook());
 interface Area {
     areaCode: string;
     areaName: string;
@@ -65,6 +66,9 @@ export default defineComponent({
         UserItem
     },
     setup() {
+        // hooks
+        const { subscribe, getUserInfoHandler, getUserInfoByOpenidHandler } = userInfoHook();
+
         // 基础状态 + 数据
         const state = reactive({
             expirationDate: 0,
@@ -76,7 +80,6 @@ export default defineComponent({
             showRules: false,
             isCanNextVote: true,
             canVote: true,
-            isInitUserInfo: false,
             isFinished: false,
             isHomeOptionsFinished: false,
             isLoadAll: false,
@@ -96,7 +99,6 @@ export default defineComponent({
         const wxState = reactive({
             code: '',
             openid: '',
-            subscribe: '' as string | number,
             appConfig: {
                 dev: {
                     appid: 'wx541ef5d359901749'
@@ -106,39 +108,6 @@ export default defineComponent({
                 }
             }
         });
-        /**
-         * 获取用户信息
-         */
-        const getUserInfoHandler = () => {
-            return new Promise<void>(resolve => {
-                getUserInfo({
-                    code: wxState.code
-                }).then((res) => {
-                    wxState.openid = res.data?.openid;
-                    resolve();
-                }).catch(() => {
-                    state.isInitUserInfo = true;
-                });
-            });
-        };
-        /**
-         * 获取用户信息
-         */
-        const getUserInfoByOpenidHandler = () => {
-            return new Promise<void>(resolve => {
-                getUserInfoByOpenid({
-                    openid: wxState.openid
-                }).then(res => {
-                    wxState.subscribe = res.data?.subscribe;
-                    resolve();
-                }).catch(() => {
-                    state.isInitUserInfo = true;
-                });
-            });
-        };
-        /**
-         * 获取活动配置信息
-         */
         const getHomepageParamsHandler = () => {
             return new Promise<void>(resolve => {
                 homepageParams({
@@ -238,6 +207,7 @@ export default defineComponent({
             ...toRefs(state),
             ...toRefs(wxState),
             ...toRefs(businessData),
+            subscribe,
             voteRef,
             scrollRef,
             changeAreaCodeHandler,
