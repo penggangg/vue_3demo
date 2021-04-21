@@ -13,7 +13,7 @@ const getFolder = (path) => {
     return components;
 };
 module.exports = {
-    description: '创建组件',
+    description: '创建页面',
     prompts: [
         {
             type: 'list',
@@ -31,21 +31,27 @@ module.exports = {
             ]
         },
         {
+            type: 'confirm',
+            name: 'isGlobal',
+            message: '是否为全局组件',
+            default: false
+        },
+        {
             type: 'list',
             name: 'path',
-            message: '请选择目录创建页面',
-            choices: ['src/pages', ...getFolder('src/pages')],
+            message: '请选择页面创建目录',
+            choices: ['src/components', ...getFolder('src/components')],
             when: function(answers) {
-                return answers.fileType === 'file';
+                return answers.fileType === 'file' && !answers.isGlobal;
             }
         },
         {
             type: 'list',
             name: 'path',
             message: '请选择目录创建文件夹',
-            choices: ['src/pages', ...getFolder('src/pages')],
+            choices: ['src/components', ...getFolder('src/components')],
             when: function(answers) {
-                return answers.fileType === 'folder';
+                return answers.fileType === 'folder' && !answers.isGlobal;
             }
         },
         {
@@ -80,20 +86,20 @@ module.exports = {
         }
     ],
     actions: data => {
-        const relativePath = path.relative('src/pages', data.path);
         console.log(data);
         let actions = [];
         if (data.fileType === 'folder') {
-            fs.mkdirSync(path.resolve(data.path, data.name));
+            const rootPath = data.isGlobal ? 'src/components/global' : data.path;
+            fs.mkdirSync(path.resolve(rootPath, data.name));
         } else {
+            const rootPath = data.isGlobal ? 'src/components/global' : data.path;
             actions = [
                 {
                     type: 'add',
-                    path: `${data.path}/{{properCase name}}.vue`,
-                    // path: `${data.path}/${data.name.replace(data.name[0], data.name[0].toUpperCase())}.vue`,
+                    path: `${rootPath}/{{properCase name}}.vue`,
                     templateFile: 'plop-templates/page/index.hbs',
                     data: {
-                        componentName: `${relativePath} ${data.name}`
+                        componentName: `${data.name}`
                     }
                 }
             ];
