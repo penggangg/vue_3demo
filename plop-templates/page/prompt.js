@@ -13,7 +13,7 @@ const getFolder = (path) => {
     return components;
 };
 module.exports = {
-    description: '创建组件',
+    description: '创建页面',
     prompts: [
         {
             type: 'list',
