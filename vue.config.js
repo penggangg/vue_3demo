@@ -10,7 +10,7 @@ module.exports = {
         }
     },
     configureWebpack: config => {
-        config.module.rules.push({
+        config.module.rules.unshift({
             test: /\.(jsx|tsx|js|ts)$/,
             loader: 'ts-loader',
             options: {
