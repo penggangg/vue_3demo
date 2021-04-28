@@ -47,7 +47,6 @@ import userInfoHook from '@/hooks/userInfoHook';
 import Countdown from '@/components/Countdown.vue';
 import AreaList from '@/components/AreaList.vue';
 import UserItem from '@/components/UserItem2.vue';
-console.log(userInfoHook());
 interface Area {
     areaCode: string;
     areaName: string;
