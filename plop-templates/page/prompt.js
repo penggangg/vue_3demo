@@ -80,7 +80,7 @@ module.exports = {
         }
     ],
     actions: data => {
-        const relativePath = path.relative('src/pages', data.path);
+        // const relativePath = path.relative('src/pages', data.path);
         console.log(data);
         let actions = [];
         if (data.fileType === 'folder') {
@@ -93,7 +93,7 @@ module.exports = {
                     // path: `${data.path}/${data.name.replace(data.name[0], data.name[0].toUpperCase())}.vue`,
                     templateFile: 'plop-templates/page/index.hbs',
                     data: {
-                        componentName: `${relativePath} ${data.name}`
+                        componentName: `${data.name}`
                     }
                 }
             ];
